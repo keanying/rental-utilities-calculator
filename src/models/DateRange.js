@@ -24,7 +24,8 @@ export class DateRange {
    */
   getDays() {
     const millisecondsPerDay = 1000 * 60 * 60 * 24;
-    return Math.round((this.endDate - this.startDate) / millisecondsPerDay) + 1; // 包含首尾两天
+    // return Math.round((this.endDate - this.startDate) / millisecondsPerDay) + 1; // 包含首尾两天
+    return Math.round((this.endDate - this.startDate) / millisecondsPerDay);
   }
 
   /**
