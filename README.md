@@ -1,4 +1,4 @@
-#### 租房水费电费计算系统，目前为v1版本，体验地址：http://dgr.wisincrease.com
+#### 租房水费电费计算系统，目前为v1版本，体验地址：https://dgr.wisincrease.com/
 当前实现：
 1.电费计算
 2.水费计算
