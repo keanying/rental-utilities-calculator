@@ -1,0 +1,76 @@
+sequenceDiagram
+    participant User
+    participant App as 租房日记应用
+    participant WaterForm as 水费计算表单
+    participant ElectricForm as 电费计算表单
+    participant WaterCalc as 水费计算器
+    participant ElectricCalc as 电费计算器
+    participant HistoryMgr as 历史记录管理器
+    participant Storage as 本地存储
+    
+    %% 初始化加载
+    User->>App: 访问应用
+    App->>Storage: 加载存储的数据
+    Storage-->>App: 返回历史记录和配置
+    App->>HistoryMgr: 初始化历史记录管理器
+    App-->>User: 显示主界面
+    
+    %% 水费计算流程
+    User->>App: 点击"水费计算"
+    App->>WaterForm: 显示水费计算表单
+    User->>WaterForm: 输入季度时间范围
+    User->>WaterForm: 输入季度总水费
+    User->>WaterForm: 添加房间
+    WaterForm-->>User: 显示房间输入字段
+    User->>WaterForm: 为房间添加住户
+    WaterForm-->>User: 显示住户输入字段
+    User->>WaterForm: 输入住户姓名和居住时间
+    User->>WaterForm: 添加更多住户/房间
+    User->>WaterForm: 点击"计算水费"
+    WaterForm->>WaterCalc: 创建水费计算器(季度范围, 总金额, 房间数据)
+    WaterCalc->>WaterCalc: 计算每位住户的分摊系数
+    WaterCalc->>WaterCalc: 计算每位住户应付水费
+    WaterCalc-->>WaterForm: 返回水费计算结果
+    WaterForm-->>User: 显示水费计算结果弹窗
+    User->>WaterForm: 点击"保存"
+    WaterForm->>HistoryMgr: 保存计算结果
+    HistoryMgr->>Storage: 将结果存入本地存储
+    
+    %% 电费计算流程
+    User->>App: 点击"电费计算"
+    App->>ElectricForm: 显示电费计算表单
+    User->>ElectricForm: 输入季度时间范围
+    User->>ElectricForm: 输入季度总电费
+    User->>ElectricForm: 添加房间
+    ElectricForm-->>User: 显示房间输入字段
+    User->>ElectricForm: 输入房间入住时间段
+    User->>ElectricForm: 添加更多房间
+    User->>ElectricForm: 点击"计算电费"
+    ElectricForm->>ElectricCalc: 创建电费计算器(季度范围, 总金额, 房间数据)
+    ElectricCalc->>ElectricCalc: 计算每个房间的分摊系数
+    ElectricCalc->>ElectricCalc: 计算每个房间应付电费
+    ElectricCalc-->>ElectricForm: 返回电费计算结果
+    ElectricForm-->>User: 显示电费计算结果弹窗
+    User->>ElectricForm: 点击"保存"
+    ElectricForm->>HistoryMgr: 保存计算结果
+    HistoryMgr->>Storage: 将结果存入本地存储
+    
+    %% 查看计算规则
+    User->>WaterForm: 点击"查看计算规则"
+    WaterForm-->>User: 显示水费计算规则弹窗
+    User->>ElectricForm: 点击"查看计算规则"
+    ElectricForm-->>User: 显示电费计算规则弹窗
+    
+    %% 历史记录查看流程
+    User->>App: 点击"计算历史记录"
+    App->>HistoryMgr: 获取历史记录列表
+    HistoryMgr-->>App: 返回历史记录
+    App-->>User: 显示历史记录列表
+    User->>App: 筛选历史记录(水费/电费)
+    App->>HistoryMgr: 获取筛选后的历史记录
+    HistoryMgr-->>App: 返回筛选结果
+    App-->>User: 显示筛选后的列表
+    User->>App: 点击历史记录"查看"
+    App->>HistoryMgr: 获取记录详情
+    HistoryMgr-->>App: 返回记录详情
+    App-->>User: 显示历史记录详情弹窗

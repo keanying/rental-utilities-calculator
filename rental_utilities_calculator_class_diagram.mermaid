@@ -1,0 +1,147 @@
+classDiagram
+    class DateRange {
+        +startDate: Date
+        +endDate: Date
+        +constructor(startDate, endDate)
+        +getDays(): number
+        +overlaps(other: DateRange): boolean
+        +getOverlap(other: DateRange): DateRange|null
+        +contains(date: Date): boolean
+        +toFormattedString(): string
+    }
+    
+    class Resident {
+        +id: string
+        +name: string
+        +dateRange: DateRange
+        +constructor(id, name, startDate, endDate)
+        +getOccupiedDays(): number
+        +toJSON(): object
+    }
+    
+    class Room {
+        +id: string
+        +name: string
+        +residents: Resident[]
+        +electricityDateRange: DateRange
+        +constructor(id, name)
+        +addResident(resident: Resident): void
+        +removeResident(residentId: string): void
+        +getOccupiedDays(): number
+        +getTotalPersonDays(quarterRange: DateRange): number
+        +setElectricityDates(startDate: Date, endDate: Date): void
+        +getElectricityDays(quarterRange: DateRange): number
+        +toJSON(): object
+    }
+    
+    class WaterBillCalculator {
+        +quarterRange: DateRange
+        +totalAmount: number
+        +rooms: Room[]
+        +constructor(quarterRange, totalAmount, rooms)
+        +calculate(): WaterBillResult
+        +getTotalPersonDays(): number
+        +getResidentShare(resident: Resident): number
+    }
+    
+    class ElectricityBillCalculator {
+        +quarterRange: DateRange
+        +totalAmount: number
+        +rooms: Room[]
+        +constructor(quarterRange, totalAmount, rooms)
+        +calculate(): ElectricityBillResult
+        +getTotalRoomDays(): number
+        +getRoomShare(room: Room): number
+    }
+    
+    class WaterBillResult {
+        +quarterRange: DateRange
+        +totalAmount: number
+        +roomResults: RoomWaterResult[]
+        +date: Date
+        +constructor(quarterRange, totalAmount, roomResults)
+        +toJSON(): object
+    }
+    
+    class RoomWaterResult {
+        +roomId: string
+        +roomName: string
+        +residentResults: ResidentWaterResult[]
+        +constructor(roomId, roomName, residentResults)
+    }
+    
+    class ResidentWaterResult {
+        +residentId: string
+        +residentName: string
+        +dateRange: DateRange
+        +days: number
+        +shareRatio: number
+        +amountToPay: number
+        +constructor(resident, shareRatio, amountToPay)
+    }
+    
+    class ElectricityBillResult {
+        +quarterRange: DateRange
+        +totalAmount: number
+        +roomResults: RoomElectricityResult[]
+        +date: Date
+        +constructor(quarterRange, totalAmount, roomResults)
+        +toJSON(): object
+    }
+    
+    class RoomElectricityResult {
+        +roomId: string
+        +roomName: string
+        +dateRange: DateRange
+        +days: number
+        +shareRatio: number
+        +amountToPay: number
+        +constructor(room, shareRatio, amountToPay)
+    }
+    
+    class HistoryManager {
+        +waterBillHistory: WaterBillResult[]
+        +electricityBillHistory: ElectricityBillResult[]
+        +constructor()
+        +addWaterBillResult(result: WaterBillResult): void
+        +addElectricityBillResult(result: ElectricityBillResult): void
+        +getWaterBillHistory(): WaterBillResult[]
+        +getElectricityBillHistory(): ElectricityBillResult[]
+        +getAllHistory(): (WaterBillResult|ElectricityBillResult)[]
+        +deleteResult(id: string, type: string): void
+        +getResultById(id: string, type: string): WaterBillResult|ElectricityBillResult|null
+        +saveToLocalStorage(): void
+        +loadFromLocalStorage(): void
+    }
+    
+    class AppState {
+        +rooms: Room[]
+        +historyManager: HistoryManager
+        +constructor()
+        +addRoom(room: Room): void
+        +removeRoom(roomId: string): void
+        +getRooms(): Room[]
+        +saveState(): void
+        +loadState(): void
+    }
+    
+    Resident ..> DateRange
+    Room o-- "*" Resident
+    Room ..> DateRange
+    WaterBillCalculator ..> DateRange
+    WaterBillCalculator ..> Room
+    WaterBillCalculator --> WaterBillResult
+    ElectricityBillCalculator ..> DateRange
+    ElectricityBillCalculator ..> Room
+    ElectricityBillCalculator --> ElectricityBillResult
+    WaterBillResult o-- "*" RoomWaterResult
+    WaterBillResult ..> DateRange
+    RoomWaterResult o-- "*" ResidentWaterResult
+    ResidentWaterResult ..> DateRange
+    ElectricityBillResult o-- "*" RoomElectricityResult
+    ElectricityBillResult ..> DateRange
+    RoomElectricityResult ..> DateRange
+    HistoryManager o-- "*" WaterBillResult
+    HistoryManager o-- "*" ElectricityBillResult
+    AppState o-- "1" HistoryManager
+    AppState o-- "*" Room
