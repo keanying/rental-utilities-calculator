@@ -38,8 +38,11 @@ Pnpm run build
 
 # 服务端
 #### 目录：server
-注意事项：目前使用的是mongodb，需要使用服务端请修改db.js中如下两个为你的地址
+**注意事项：**
+```shell
+目前使用的是mongodb，需要使用服务端请修改db.js中如下两个为你的地址
 // MongoDB connection URI
 const uri = "mongodb://root:CydubPI3ZaKGjPM2@192.168.0.17:27017";
 // Database name
 const dbName = 'rental_utilities_calculator';
+```
