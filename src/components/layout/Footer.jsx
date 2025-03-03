@@ -25,7 +25,7 @@ const Footer = () => {
           <div className="mt-4 md:mt-0 text-sm text-muted-foreground">
             <div className="flex items-center">
               <a 
-                href="https://github.com/keanying/rental-utilities-calculator"
+                href="https://github.com/keanying/rental-utilities-calculator" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="flex items-center hover:text-primary transition-colors"

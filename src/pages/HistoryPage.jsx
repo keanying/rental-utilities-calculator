@@ -1,12 +1,17 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ClipboardList, Droplets, Zap, Trash2, ExternalLink, Search } from 'lucide-react';
+import { 
+  ClipboardList, Droplets, Zap, Trash2, ExternalLink, 
+  Search, Loader2 
+} from 'lucide-react';
+import DataSourceIndicator from '../components/common/DataSourceIndicator';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
 import { useAppContext } from '../contexts/AppContext';
 import { formatCurrency } from '../lib/utils';
 import WaterBillResult from '../components/water/WaterBillResult';
@@ -14,7 +19,14 @@ import ElectricityBillResult from '../components/electricity/ElectricityBillResu
 import Modal from '../components/common/Modal';
 
 const HistoryPage = () => {
-  const { waterBillHistory, electricityBillHistory, deleteWaterBillHistory, deleteElectricityBillHistory } = useAppContext();
+  const { 
+    waterBillHistory, 
+    electricityBillHistory, 
+    deleteWaterBillHistory, 
+    deleteElectricityBillHistory,
+    isLoading,
+    dataSource
+  } = useAppContext();
   const navigate = useNavigate();
   
   const [activeTab, setActiveTab] = useState('water');
@@ -72,13 +84,11 @@ const HistoryPage = () => {
     setShowDetailModal(true);
   };
   
-  const handleDeleteBill = (billId, billType) => {
+  const handleDeleteBill = async (billId, billType) => {
     if (billType === 'water') {
-      deleteWaterBillHistory(billId);
-      toast.success('已删除水费记录');
+      await deleteWaterBillHistory(billId);
     } else {
-      deleteElectricityBillHistory(billId);
-      toast.success('已删除电费记录');
+      await deleteElectricityBillHistory(billId);
     }
   };
   
@@ -91,6 +101,8 @@ const HistoryPage = () => {
     toast.info('分享功能开发中');
     // 实现分享功能
   };
+  
+
   
   const renderEmptyState = () => (
     <div className="text-center py-16 space-y-4">
@@ -167,8 +179,13 @@ const HistoryPage = () => {
               size="sm" 
               onClick={() => handleDeleteBill(bill.id, type)}
               className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              disabled={isLoading}
             >
-              <Trash2 className="h-4 w-4 mr-1" />
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4 mr-1" />
+              )}
               删除
             </Button>
             <Button 
@@ -189,28 +206,46 @@ const HistoryPage = () => {
     }
   };
   
+  // 加载中状态显示
+  if (isLoading && (!waterBillHistory.length && !electricityBillHistory.length)) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+        <h3 className="text-xl font-medium">正在加载历史数据...</h3>
+        <p className="text-muted-foreground mt-2">
+          正在从{dataSource === 'cloud' ? '云端数据库' : '本地存储'}获取历史记录
+        </p>
+      </div>
+    );
+  }
+  
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="p-2 rounded-full bg-green-100 dark:bg-green-900/30">
-          <ClipboardList className="h-6 w-6 text-green-600 dark:text-green-400" />
-        </div>
-        <div>
-          <h1 className="text-3xl font-bold">历史记录</h1>
-          <p className="text-muted-foreground">
-            查看和管理您保存的水电费计算记录
-          </p>
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-full bg-green-100 dark:bg-green-900/30">
+            <ClipboardList className="h-6 w-6 text-green-600 dark:text-green-400" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold flex items-center">
+              历史记录
+              <DataSourceIndicator />
+            </h1>
+            <p className="text-muted-foreground">
+              查看和管理您保存的水电费计算记录 - {dataSource === 'cloud' ? '数据已同步至云端' : '数据仅保存在本地设备'}
+            </p>
+          </div>
         </div>
       </div>
       
       <Tabs defaultValue="water" value={activeTab} onValueChange={setActiveTab}>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <TabsList>
-            <TabsTrigger value="water" className="gap-2">
+            <TabsTrigger value="water" className="gap-2" disabled={isLoading}>
               <Droplets className="h-4 w-4" />
               水费记录
             </TabsTrigger>
-            <TabsTrigger value="electricity" className="gap-2">
+            <TabsTrigger value="electricity" className="gap-2" disabled={isLoading}>
               <Zap className="h-4 w-4" />
               电费记录
             </TabsTrigger>
@@ -224,9 +259,10 @@ const HistoryPage = () => {
                 className="pl-8 w-full sm:w-auto"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                disabled={isLoading}
               />
             </div>
-            <Select value={sortBy} onValueChange={setSortBy}>
+            <Select value={sortBy} onValueChange={setSortBy} disabled={isLoading}>
               <SelectTrigger className="w-[140px]">
                 <SelectValue placeholder="排序方式" />
               </SelectTrigger>
@@ -241,7 +277,11 @@ const HistoryPage = () => {
         </div>
         
         <TabsContent value="water" className="mt-6">
-          {filteredHistory.length === 0 ? (
+          {isLoading ? (
+            <div className="flex justify-center p-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : filteredHistory.length === 0 ? (
             renderEmptyState()
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -257,7 +297,11 @@ const HistoryPage = () => {
         </TabsContent>
         
         <TabsContent value="electricity" className="mt-6">
-          {filteredHistory.length === 0 ? (
+          {isLoading ? (
+            <div className="flex justify-center p-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : filteredHistory.length === 0 ? (
             renderEmptyState()
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

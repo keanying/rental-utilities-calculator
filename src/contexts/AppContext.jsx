@@ -14,28 +14,71 @@ export const AppProvider = ({ children }) => {
   const [waterBillHistory, setWaterBillHistory] = useState([]);
   const [electricityBillHistory, setElectricityBillHistory] = useState([]);
   
+  // 加载状态
+  const [isLoading, setIsLoading] = useState(true);
+  // 数据源状态（本地存储或云端API）
+  const [dataSource, setDataSource] = useState('loading');
+  
   // 初始化历史记录管理器
   useEffect(() => {
-    const manager = new HistoryManager();
-    setHistoryManager(manager);
-    setWaterBillHistory(manager.getWaterBillHistory());
-    setElectricityBillHistory(manager.getElectricityBillHistory());
+    const initializeHistoryManager = async () => {
+      setIsLoading(true);
+      try {
+        const manager = new HistoryManager();
+        setHistoryManager(manager);
+        
+        // 等待初始化完成
+        const checkInitStatus = () => {
+          if (!manager.isLoadingData()) {
+            setWaterBillHistory(manager.getWaterBillHistory());
+            setElectricityBillHistory(manager.getElectricityBillHistory());
+            setIsLoading(false);
+            
+            const usingCloud = manager.isUsingCloud();
+            setDataSource(usingCloud ? 'cloud' : 'localStorage');
+            
+            // if (usingCloud) {
+            //   toast.success('已连接到云端数据库');
+            // } else {
+            //   toast.warning('使用本地存储模式');
+            // }
+            return;
+          }
+          
+          // 如果还在加载，稍后再检查
+          setTimeout(checkInitStatus, 500);
+        };
+        
+        checkInitStatus();
+      } catch (error) {
+        console.error('初始化历史记录管理器失败:', error);
+        setIsLoading(false);
+        setDataSource('localStorage');
+        toast.error('连接云端数据库失败，使用本地存储模式');
+      }
+    };
+    
+    initializeHistoryManager();
   }, []);
   
   /**
    * 添加水费计算结果到历史记录
    * @param {Object} result - 水费计算结果
    */
-  const addWaterBillHistory = (result) => {
+  const addWaterBillHistory = async (result) => {
     if (!historyManager) return;
     
     try {
-      const addedResult = historyManager.addWaterBillHistory(result);
+      setIsLoading(true);
+      const addedResult = await historyManager.addWaterBillHistory(result);
       setWaterBillHistory(historyManager.getWaterBillHistory());
+      setIsLoading(false);
+      toast.success('水费记录已保存');
       return addedResult;
     } catch (error) {
       console.error('添加水费历史记录失败:', error);
       toast.error('保存历史记录失败');
+      setIsLoading(false);
     }
   };
   
@@ -43,16 +86,20 @@ export const AppProvider = ({ children }) => {
    * 添加电费计算结果到历史记录
    * @param {Object} result - 电费计算结果
    */
-  const addElectricityBillHistory = (result) => {
+  const addElectricityBillHistory = async (result) => {
     if (!historyManager) return;
     
     try {
-      const addedResult = historyManager.addElectricityBillHistory(result);
+      setIsLoading(true);
+      const addedResult = await historyManager.addElectricityBillHistory(result);
       setElectricityBillHistory(historyManager.getElectricityBillHistory());
+      setIsLoading(false);
+      toast.success('电费记录已保存');
       return addedResult;
     } catch (error) {
       console.error('添加电费历史记录失败:', error);
       toast.error('保存历史记录失败');
+      setIsLoading(false);
     }
   };
   
@@ -60,18 +107,24 @@ export const AppProvider = ({ children }) => {
    * 删除水费历史记录
    * @param {string} id - 记录ID
    */
-  const deleteWaterBillHistory = (id) => {
+  const deleteWaterBillHistory = async (id) => {
     if (!historyManager) return;
     
     try {
-      const success = historyManager.deleteWaterBillHistory(id);
+      setIsLoading(true);
+      const success = await historyManager.deleteWaterBillHistory(id);
       if (success) {
         setWaterBillHistory(historyManager.getWaterBillHistory());
+        toast.success('删除记录成功');
+      } else {
+        toast.error('删除记录失败');
       }
+      setIsLoading(false);
       return success;
     } catch (error) {
       console.error('删除水费历史记录失败:', error);
       toast.error('删除历史记录失败');
+      setIsLoading(false);
     }
   };
   
@@ -79,35 +132,44 @@ export const AppProvider = ({ children }) => {
    * 删除电费历史记录
    * @param {string} id - 记录ID
    */
-  const deleteElectricityBillHistory = (id) => {
+  const deleteElectricityBillHistory = async (id) => {
     if (!historyManager) return;
     
     try {
-      const success = historyManager.deleteElectricityBillHistory(id);
+      setIsLoading(true);
+      const success = await historyManager.deleteElectricityBillHistory(id);
       if (success) {
         setElectricityBillHistory(historyManager.getElectricityBillHistory());
+        toast.success('删除记录成功');
+      } else {
+        toast.error('删除记录失败');
       }
+      setIsLoading(false);
       return success;
     } catch (error) {
       console.error('删除电费历史记录失败:', error);
       toast.error('删除历史记录失败');
+      setIsLoading(false);
     }
   };
   
   /**
    * 清空所有历史记录
    */
-  const clearAllHistory = () => {
+  const clearAllHistory = async () => {
     if (!historyManager) return;
     
     try {
-      historyManager.clearAllHistory();
+      setIsLoading(true);
+      await historyManager.clearAllHistory();
       setWaterBillHistory([]);
       setElectricityBillHistory([]);
+      setIsLoading(false);
       toast.success('已清空所有历史记录');
     } catch (error) {
       console.error('清空历史记录失败:', error);
       toast.error('清空历史记录失败');
+      setIsLoading(false);
     }
   };
   
@@ -119,7 +181,9 @@ export const AppProvider = ({ children }) => {
     addElectricityBillHistory,
     deleteWaterBillHistory,
     deleteElectricityBillHistory,
-    clearAllHistory
+    clearAllHistory,
+    isLoading,
+    dataSource
   };
   
   return (

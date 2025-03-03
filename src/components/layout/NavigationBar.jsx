@@ -1,10 +1,13 @@
 import React from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { Home, Droplets, Zap, ClipboardList, Menu, X } from 'lucide-react';
+import DataSourceIndicator from '../common/DataSourceIndicator';
+import { useAppContext } from '../../contexts/AppContext';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 const NavigationBar = () => {
+  const { dataSource } = useAppContext();
   const navItems = [
     { to: '/', icon: <Home className="h-4 w-4" />, label: '首页' },
     { to: '/water-bill', icon: <Droplets className="h-4 w-4" />, label: '水费计算' },
@@ -17,6 +20,7 @@ const NavigationBar = () => {
       <div className="container flex h-16 items-center">
         <Link to="/" className="flex items-center gap-2 mr-4">
           <div className="font-bold text-xl">租房日记</div>
+          {dataSource !== 'loading' && <DataSourceIndicator />}
         </Link>
 
         {/* Desktop Navigation */}
@@ -48,7 +52,11 @@ const NavigationBar = () => {
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-[240px] sm:w-[300px]">
-            <nav className="flex flex-col gap-4 mt-8">
+            <div className="flex items-center gap-2 mb-6 mt-4">
+              <div className="font-bold text-xl">租房日记</div>
+              {dataSource !== 'loading' && <DataSourceIndicator />}
+            </div>
+            <nav className="flex flex-col gap-4">
               {navItems.map((item) => (
                 <NavLink
                   key={item.to}
